@@ -1,0 +1,49 @@
+#cloud-config
+
+packages:
+  - tinyproxy
+
+write_files:
+  - path: /etc/defaults/tinyproxy
+    content: |
+      CONFIG="/etc/tinyproxy/tinyproxy.conf"
+      FLAGS="-c $CONFIG"
+    permissions: "0644"
+
+  - path: /etc/tinyproxy/filter
+    content: |
+      %{ for filter in proxy_domain_filters ~}
+^${replace(filter, ".", "\\.")}$
+      %{ endfor ~}
+
+    permissions: "0644"
+
+  - path: /etc/tinyproxy/tinyproxy.conf
+    content: |
+      User tinyproxy
+      Group tinyproxy
+      Port ${proxy_listen_port}
+      Timeout 600
+      DefaultErrorFile "/usr/share/tinyproxy/default.html"
+      Syslog On
+      PidFile "/run/tinyproxy/tinyproxy.pid"
+      %{ for client in proxy_clients_acl ~}
+Allow ${client}
+      %{ endfor ~}
+
+      Allow 127.0.0.1
+      Allow ::1
+      #BasicAuth user password
+      #FilterType fnmatch # New in 1.11.1
+      Filter "/etc/tinyproxy/filter"
+      FilterDefaultDeny Yes
+    permissions: "0644"
+
+runcmd:
+  - [ systemctl, enable, --now, tinyproxy.service ]
+  - [ curl, -fsSL, https://${proxy_domain_filters[0]}/, -o, /dev/null ]
+  - [ curl, -fsSLx, 127.0.0.1:${proxy_listen_port}, https://${proxy_domain_filters[0]}/, -o, /dev/null ]
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
