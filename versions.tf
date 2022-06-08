@@ -4,6 +4,12 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.17.1"
     }
+
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1.3"
+    }
+
     cloudinit = {
       source  = "hashicorp/cloudinit"
       version = "~>2.2"

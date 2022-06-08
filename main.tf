@@ -112,10 +112,19 @@ resource "aws_instance" "tinyproxy" {
   user_data              = data.cloudinit_config.tinyproxy.rendered
   vpc_security_group_ids = [aws_security_group.tinyproxy.id]
   key_name               = aws_key_pair.tinyproxy.key_name
+
+  root_block_device {
+    encrypted = true
+  }
+}
+
+resource "random_id" "key_name" {
+  byte_length = 8
+  prefix      = "ff-local-key-"
 }
 
 resource "aws_key_pair" "tinyproxy" {
-  key_name   = "tinyproxy_local_key"
+  key_name   = random_id.key_name.hex
   public_key = file("~/.ssh/id_ed25519.pub")
 }
 
