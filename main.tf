@@ -8,8 +8,38 @@ locals {
   }
 }
 
+resource "aws_vpc" "tinyproxy" {
+  cidr_block                       = "10.0.0.0/24"
+  enable_dns_hostnames             = true
+  assign_generated_ipv6_cidr_block = true
+}
+
+resource "aws_subnet" "tinyproxy" {
+  vpc_id     = aws_vpc.tinyproxy.id
+  cidr_block = aws_vpc.tinyproxy.cidr_block
+}
+
+resource "aws_internet_gateway" "tinyproxy" {
+  vpc_id = aws_vpc.tinyproxy.id
+}
+
+resource "aws_route_table" "internet" {
+  vpc_id = aws_vpc.tinyproxy.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.tinyproxy.id
+  }
+}
+
+resource "aws_route_table_association" "tinyproxy" {
+  subnet_id      = aws_subnet.tinyproxy.id
+  route_table_id = aws_route_table.internet.id
+}
+
 resource "aws_security_group" "tinyproxy" {
-  name = "tinyproxy"
+  name   = local.name
+  vpc_id = aws_vpc.tinyproxy.id
 
   ingress {
     description      = "Allow pings"
@@ -111,6 +141,7 @@ resource "aws_instance" "tinyproxy" {
   instance_type          = "t2.nano"
   user_data              = data.cloudinit_config.tinyproxy.rendered
   vpc_security_group_ids = [aws_security_group.tinyproxy.id]
+  subnet_id              = aws_subnet.tinyproxy.id
   key_name               = aws_key_pair.tinyproxy.key_name
 
   root_block_device {
