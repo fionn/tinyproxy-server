@@ -20,3 +20,11 @@ variable "proxy_listen_port" {
   type        = number
   default     = 8888
 }
+
+variable "proxy_credentials" {
+  description = "Usernames and passwords to authenticate to the proxy"
+  type        = list(map(string))
+  #default    = [{user = "User", password = "password123"}]
+  default   = []
+  sensitive = true
+}

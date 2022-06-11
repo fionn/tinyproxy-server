@@ -5,6 +5,7 @@ locals {
     proxy_domain_filters = var.proxy_domain_filters
     proxy_clients_acl    = var.proxy_clients_acl
     proxy_listen_port    = var.proxy_listen_port
+    proxy_credentials    = var.proxy_credentials
   }
 }
 
@@ -165,4 +166,8 @@ output "tinyproxy_eip_address" {
     "public_ip"  = aws_eip.tinyproxy.public_ip
     "public_dns" = aws_eip.tinyproxy.public_dns
   }
+}
+
+output "user_data" {
+  value = data.cloudinit_config.tinyproxy.rendered
 }
